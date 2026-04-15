@@ -1,0 +1,28 @@
+# Core
+fastapi==0.135.3
+uvicorn==0.41.0
+pydantic==2.12.5
+pydantic-settings==2.13.1
+
+# LangGraph / LangChain
+langgraph==1.1.3
+langchain-core==1.2.17
+langchain-ollama==1.0.1
+
+# HTTP & HTML
+httpx==0.28.1
+beautifulsoup4==4.14.3
+
+# Database
+aiosqlite==0.22.1
+
+# Observability
+mlflow==3.10.1
+
+# Utilities
+python-dotenv==1.2.2
+ipython==9.11.0
+
+# Dev
+pytest==9.0.2
+pytest-asyncio==1.3.0
