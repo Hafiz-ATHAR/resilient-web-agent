@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     # Local LLM name, e.g. "qwen-7b-chat" or "gemini-1.5-pro"
     local_llm: str
 
+    # Database path
+    db_path: Path = Path(__file__).parent.parent / "state_db" / "long-running-job.db"
+
     # CORS — comma-separated or JSON array, e.g. CORS_ORIGINS='["http://host1","http://host2"]'
     cors_origins: list[str] = Field(default=["http://localhost:3000"])
 
