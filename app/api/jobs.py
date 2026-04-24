@@ -31,10 +31,6 @@ async def run_graph(graph, initial_state: dict, config: dict, queue: asyncio.Que
         pass  # let uvicorn know the task was cancelled, lifespan shutdown will handle traces
     except Exception as e:
         print(f"Graph error: {e}")
-    finally:
-        traces = mlflow.search_traces(
-            filter_string="status = 'IN_PROGRESS'", return_type="list"
-        )
 
 
 async def resume_graph(graph, config: dict):
