@@ -26,7 +26,7 @@ flowchart TB
     subgraph Graph["LangGraph Workflow (app/graph/)"]
         direction TB
         N1["initializer"] --> N2["fetcher<br/>(httpx GET)"]
-        N2 -- ok --> N3["summarizer<br/>(Ollama LLM)"]
+        N2 -- ok --> N3["summarizer<br/>(LLM Service)"]
         N2 -- error --> N4["accumulator"]
         N3 --> N4
         N4 -- pending_urls --> N2
@@ -36,11 +36,15 @@ flowchart TB
     State[("AgentState<br/>urls_to_process,<br/>pending, results,<br/>counters, status")]
     DB[("SQLite Checkpointer<br/>state-db/long-running-job.db<br/>AsyncSqliteSaver")]
 
-    subgraph External["External Services"]
+    subgraph Observability["Observability"]
         direction LR
         MLflow["MLflow<br/>(tracing/autolog)"]
-        LangSmith["LangSmith<br/>(optional)"]
-        Ollama["Ollama<br/>(local LLM)"]
+        Structlog["structlog<br/>(structured logs)"]
+    end
+
+    subgraph External["External Services"]
+        direction LR
+        LLM["LLM Service"]
         Web["🌍 Target URLs<br/>(httpx fetch)"]
     end
 
@@ -58,9 +62,9 @@ flowchart TB
     Queues -->|SSE events| Client
 
     N2 -.fetch.-> Web
-    N3 -.invoke.-> Ollama
+    N3 -.invoke.-> LLM
     Graph -.traces.-> MLflow
-    Graph -.traces.-> LangSmith
+    FastAPI -.logs.-> Structlog
 ```
 
 ## Request Flow
@@ -97,9 +101,8 @@ flowchart TB
 
 - **FastAPI** — web framework
 - **LangGraph** — workflow orchestration + checkpointing
-- **LangChain / langchain-ollama** — LLM integration (local Ollama)
+- **LangChain** — LLM Service integration
 - **httpx** — async URL fetching
 - **MLflow** — experiment & trace tracking
-- **LangSmith** *(optional)* — additional tracing
 - **structlog** — structured logging
 - **Pydantic / pydantic-settings** — validation & config
