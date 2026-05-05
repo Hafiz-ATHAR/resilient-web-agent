@@ -4,9 +4,12 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Optional
 
+
 class Settings(BaseSettings):
     # Environment
-    environment: Literal["development", "testing", "staging", "production"] = "development"
+    environment: Literal["development", "testing", "staging", "production"] = (
+        "development"
+    )
 
     # MLflow
     mlflow_tracking_uri: str
@@ -16,7 +19,7 @@ class Settings(BaseSettings):
     # LLM API Keys
     gemini_api_key: Optional[str] = None
     groq_api_key: Optional[str] = None
-    #Web Search API Keys
+    # Web Search API Keys
     tavily_api_key: Optional[str] = None
 
     # LangSmith
@@ -34,6 +37,12 @@ class Settings(BaseSettings):
     # CORS — comma-separated or JSON array, e.g. CORS_ORIGINS='["http://host1","http://host2"]'
     cors_origins: list[str] = Field(default=["http://localhost:3000"])
 
+    # Rate limiting
+    api_rate_limit: str = "10/minute"  # POST /jobs, /resume
+    api_rate_limit_read: str = "120/minute"  # GET status, result
+    llm_max_concurrency: int = Field(default=2, ge=1)
+    max_urls_per_job: int = Field(default=20, ge=1, le=500)
+
     model_config = SettingsConfigDict(
         env_file=Path(__file__).parent.parent / ".env",
         env_file_encoding="utf-8",
@@ -43,4 +52,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings() # type: ignore
+    return Settings()  # type: ignore

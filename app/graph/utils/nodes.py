@@ -6,7 +6,7 @@ from langchain_core.runnables import RunnableConfig
 from .state import AgentState, UrlResult
 import textwrap
 from .helper_methods import fetch_error, extract_text
-from .llm import get_llm
+from .llm import get_llm, llm_semaphore
 
 log = structlog.get_logger(__name__)
 
@@ -50,10 +50,12 @@ async def fetcher(
     started = time.perf_counter()
 
     try:
-        async with httpx.AsyncClient(
-            timeout=15.0,
-            headers={"User-Agent": "Mozilla/5.0 (compatible; research-agent/1.0)"},
-        ) as client:  # without User-Agent 403 error is common, and we want to be polite to servers by identifying ourselves
+        async with (
+            httpx.AsyncClient(
+                timeout=15.0,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; research-agent/1.0)"},
+            ) as client
+        ):  # without User-Agent 403 error is common, and we want to be polite to servers by identifying ourselves
             response = await client.get(url, follow_redirects=True)  # type: ignore
             response.raise_for_status()
             log.info(
@@ -106,7 +108,8 @@ async def summarizer(state: AgentState, config: RunnableConfig) -> dict:
     try:
         summarize_prompt = SUMMARIZER_PROMPT.format(content=content)
         qwen3_model = get_llm()
-        response = await qwen3_model.ainvoke(summarize_prompt)
+        async with llm_semaphore:
+            response = await qwen3_model.ainvoke(summarize_prompt)
         if not response.content:
             raise ValueError("Empty response from LLM")
 

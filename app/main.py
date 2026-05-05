@@ -12,6 +12,10 @@ from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from .config import get_settings
 from .logging_config import configure_logging
 from .middleware.request_id import RequestIdMiddleware
+from .middleware.rate_limit import limiter
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 import time
 
 settings = get_settings()
@@ -83,6 +87,10 @@ def _cleanup_traces():
 
 app = FastAPI(lifespan=lifespan)
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore
+
+app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

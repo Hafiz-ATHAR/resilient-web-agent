@@ -5,7 +5,11 @@ import mlflow
 import structlog
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from fastapi.sse import EventSourceResponse
+from ..config import get_settings
+from ..middleware.rate_limit import limiter
 from ..schemas.schema import CreateJobRequest, ResumeJob
+
+_settings = get_settings()
 
 log = structlog.get_logger(__name__)
 
@@ -70,6 +74,7 @@ async def resume_graph(graph, config: dict):
 
 
 @job_router.post("")
+@limiter.limit(_settings.api_rate_limit)
 async def create_job(
     request: Request, body: CreateJobRequest, background_tasks: BackgroundTasks
 ):
@@ -98,6 +103,7 @@ async def create_job(
 
 
 @job_router.post("/{thread_id}/resume")
+@limiter.limit(_settings.api_rate_limit)
 async def resume_job(
     request: Request, body: ResumeJob, background_tasks: BackgroundTasks
 ):
@@ -145,6 +151,7 @@ async def stream_items(request: Request, thread_id: str):
 
 
 @job_router.get("/{thread_id}")
+@limiter.limit(_settings.api_rate_limit_read)
 async def get_job_status(request: Request, thread_id: str):
     structlog.contextvars.bind_contextvars(thread_id=thread_id)
     config = {"configurable": {"thread_id": thread_id}}
@@ -166,6 +173,7 @@ async def get_job_status(request: Request, thread_id: str):
 
 
 @job_router.get("/{thread_id}/result")
+@limiter.limit(_settings.api_rate_limit_read)
 async def get_job_result(request: Request, thread_id: str):
     structlog.contextvars.bind_contextvars(thread_id=thread_id)
     config = {"configurable": {"thread_id": thread_id}}
